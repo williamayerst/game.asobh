@@ -1,28 +1,10 @@
+"""Basic Module"""
 from pymongo import MongoClient
-client = MongoClient('mongodb://localhost:27017/')
-db = client['asobhdb']
-warband = db['asobhwarband']
-localwarband = db.warband
-_id = 0
-
-post = {"author": "Mike", "text": "My first blog post!", "tags": ["mongodb", "python", "pymongo"]}
-localwarband.insert_one(post)
-# post_id = localwarband.insert_one(post).inserted_id
-print (*db.collection_names(include_system_collections=False))
-print (localwarband.find())
-# print (localwarband.find_one({"_id": post_id}))
-
-# The web framework gets post_id from the URL and passes it as a string
-def get(_id):
-    # Convert from string to ObjectId:
-    document = client.db.warband.find_one({'_id': _id})
-    
 
 def confirm(prompt=None, resp=False):
-    # Confirmation Prompt
+    """Confirmation Prompt"""
     if prompt is None:
         prompt = 'Confirm'
-
     if resp:
         prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
     else:
@@ -41,7 +23,8 @@ def confirm(prompt=None, resp=False):
             return False
 
 def setplayerdetails():
-    # Request input for user details
+    """Request input for user details"""
+    tempdetails = {}
     while True:
         try:
             name = str(input("Enter Name: "))
@@ -49,6 +32,7 @@ def setplayerdetails():
             print("Not a string!")
             continue
         else:
+            tempdetails["Name"] = name
             break
 
     while True:
@@ -58,6 +42,7 @@ def setplayerdetails():
             print("Not an integer!")
             continue
         else:
+            tempdetails["quality"] = quality
             break
 
     while True:
@@ -67,86 +52,67 @@ def setplayerdetails():
             print("Not an integer!")
             continue
         else:
+            tempdetails["combat"] = combat
             break
-    return name, quality, combat
+    return tempdetails
 
-
-class figure:
-    """Basic figure class, with ability to return stats, etc."""
-    def __init__ (self, name, quality, combat):
-        """Basic figure class, with ability to return stats, etc."""
-        self.name = name
-        self.quality = quality
-        self.combat = combat
-    def stats(self):
-        """Basic figure class, with ability to return stats, etc."""
-        stats = {'name':self.name, 'quality':self.quality, 'combat':self.combat}
-        return stats
-
-    def add(self):
-        """Basic figure class, with ability to return stats, etc."""
-        global warbandlist
-        print ("Adding new figure with following details: Name:%s, Quality:%d, Combat:%d to Warband - OK?" %(self.name, self.quality, self.combat))
-        if confirm() == True:
-            print ("Adding to list")
-            warbandlist.append({'name':self.name, 'quality':self.quality, 'combat':self.combat})
-        else:
-            print ("Skipping")
-
-def clearwarband():
-    global localwarband
-    result = db.restaurants.delete_many({})
-    print("Cleared Warband of: %d entries" % (result.deleted_count))
+class Database:
+    """Main Database Class"""
+    _id = 0
+    def __init__(self, uri, data, collection):
+        """Set up data class"""
+        self.myuri = MongoClient(uri)
+        self.mydata = self.myuri[data]
+        self.localdata = self.mydata[collection]
+        # self.localdata = self.mydata.self.mycollection
+    def clear(self):
+        """Clears data Warband"""
+        result = self.localdata.delete_many({})
+        print("Cleared Warband of: %d entries" % (result.deleted_count))
+    def check_add(self, player):
+        """Add player to database"""
+        result = self.localdata.insert_one(player)
+        print(self.localdata.collection_names(include_system_collections=False))
+        print(self.localdata.find())
+    def get(self, _id):
+        """Function to get record from data:"""
+        document = self.localdata.find_one({'_id': _id})
+        print(document)
+    def listall(self):
+        """Function to get all records from data:"""
+        documentlist = self.localdata.find({})
+        print(documentlist)
 
 def main():
     """Main Menu Area"""
-    global warbandlist
     choice = '0'
+    activedatabase = Database("mongodb://localhost:27017", "asobhdata", "asobhtable")
     while choice == '0':
         print("MENU")
-        print("1. Add Figure to Warband")
-        print("2. Show Warband")
-        print("3. Initialise Warband")
-        print("4. DB - Add Figure to Warband")
-        print("5. DB - Show Warband")
-        print("6. DB - Clear Warband")
+        print("4. data - Add Figure to Warband")
+        print("5. data - Show Warband")
+        print("6. data - Clear Warband")
         print("9. exit")
-        choice = input ("Please make a choice: ")
+        choice = input("Please make a choice: ")
     if choice == "9":
         quit()
     elif choice == "6":
-        clearwarband()
+        print("data clear")
+        activedatabase = activedatabase.clear
     elif choice == "5":
-        print("DB show")
+        activedatabase = activedatabase.listall
     elif choice == "4":
-        print("DB add")
-    elif choice == "3":
-        warbandlist = []
-    elif choice == "2":
-        print(warbandlist, sep='\n')
-    elif choice == "1":
-        # Put user input for new player into figure class
-        newplayer = figure(*setplayerdetails())
-        # Add figure to warband
-        newplayer.add()
+        print("data add")
+        newplayeradd = {}
+        newplayeradd = setplayerdetails()
+        for keys,values in newplayeradd.items():
+            print(keys)
+            print(values)
+        
+        # activedatabase = activedatabase.check_add(newplayeradd)
     else:
         print("I don't understand your choice.")
 
 ## Main menu! Commented to test Mongo
-#while True:
-    #main()
-
-# Insubstantiate new warband list
-
-
-#name = str(input("Enter Name: "))
-#quality = int(input("Enter Quality: "))
-#combat = int(input("Enter Combat: "))
-
-
-#newplayer = figure()
-
-# Call function to populate class statistics
-#newplayer.create()
-
-# Print character object
+while True:
+    main()
